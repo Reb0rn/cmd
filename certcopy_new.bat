@@ -1,9 +1,9 @@
 ﻿d:
 cd D:\PKI\Authority\issued_certificates\
-robocopy "D:\PKI\Certificateion Authority\issued_certificates" D:\PKI\Archive\Today *.cer /LOG+:D:\PKI\Archive\log1.txt
+robocopy "D:\PKI\issued_certificates" D:\PKI\Archive\Today *.cer /LOG+:D:\PKI\Archive\log1.txt
 move /y *.cer D:\PKI\Archive\Transit\
 
-net use l: \\1.1.1.1\Certificates_172_30_30_9_NEW /user:123-N2\user user
+net use l: \\1.1.1.1\Certificates_172_NEW /user:123-N2\user user
 cd D:\PKI\Archive\Transit\
 xcopy *.cer l: /y
 Net Use * /delete /y
