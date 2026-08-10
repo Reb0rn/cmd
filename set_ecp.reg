@@ -1,0 +1,19 @@
+Windows Registry Editor Version 5.00
+
+
+[HKEY_CURRENT_USER\Software\Classes\.p7s\shell\AvCmUtVerify]
+@="Проверить ЭЦП (АВЕСТ)"
+"Icon"="C:\\Program Files (x86)\\Avest\\AvPCM_nces\\AvCmUt4.exe"
+
+[HKEY_CURRENT_USER\Software\Classes\.p7s\shell\AvCmUtVerify\command]
+@="\"C:\\Program Files (x86)\\Avest\\AvPCM_nces\\AvCmUt4.exe\" -V \"%1\" -NA -VIEWMSG"
+
+
+[HKEY_CURRENT_USER\Software\Classes\.sgn\shell\AvCmUtVerify]
+@="Проверить ЭЦП (АВЕСТ)"
+"Icon"="C:\\Program Files (x86)\\Avest\\AvPCM_nces\\AvCmUt4.exe"
+
+[HKEY_CURRENT_USER\Software\Classes\.sgn\shell\AvCmUtVerify\command]
+@="\"C:\\Program Files (x86)\\Avest\\AvPCM_nces\\AvCmUt4.exe\" -V \"%1\" -NA -VIEWMSG"
+
+
