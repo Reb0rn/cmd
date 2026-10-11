@@ -1,0 +1,92 @@
+#Requires -RunAsAdministrator
+
+
+
+
+if (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+    Write-Warning "Скрипт требует прав администратора. Запустите PowerShell от имени Администратора."
+    exit 1
+}
+
+
+$SetupDir = $PSScriptRoot
+$DataDir  = Join-Path $SetupDir "data"
+$DocsDir  = Join-Path $SetupDir "docs"
+
+
+$ProgramFiles = ${env:ProgramFiles(x86)}
+if (-not $ProgramFiles) { $ProgramFiles = $env:ProgramFiles }
+
+
+function Start-SilentInstall {
+    param (
+        [string]$FilePath,
+        [string]$Arguments,
+        [string]$ComponentName
+    )
+    
+    if (-not (Test-Path $FilePath)) {
+        Write-Warning "Файл не найден: $FilePath. Пропуск установки $ComponentName."
+        return
+    }
+
+    Write-Host "Установка компонента: $ComponentName ..." -ForegroundColor Cyan
+    
+    $processInfo = New-Object System.Diagnostics.ProcessStartInfo
+    $processInfo.FileName = $FilePath
+    $processInfo.Arguments = $Arguments
+    $processInfo.UseShellExecute = $false
+    $processInfo.CreateNoWindow = $true
+    
+    $process = New-Object System.Diagnostics.Process
+    $process.StartInfo = $processInfo
+    $process.Start() | Out-Null
+    $process.WaitForExit()
+    
+    # Игнорируем код 3010 (требуется перезагрузка),
+    if ($process.ExitCode -ne 0 -and $process.ExitCode -ne 3010) {
+        Write-Warning "Установка $ComponentName завершилась с кодом ошибки: $($process.ExitCode)"
+    } else {
+        Write-Host "Компонент $ComponentName успешно установлен." -ForegroundColor Green
+    }
+}
+
+
+
+
+
+$CSPExe = Join-Path $DataDir "setupAvCSPBign6.3.0.842.exe"
+# Формируем аргументы. /NORESTART запрещает перезагрузку, /RESTARTEXITCODE=3010 меняет код возврата
+$CSPArgs = "/NORESTART /VERYSILENT /RESTARTEXITCODE=3010 /entropy=`"$env:TEMP\mouse.dat`" /devices=`"AvBign`""
+Start-SilentInstall -FilePath $CSPExe -Arguments $CSPArgs -ComponentName "Криптопровайдер Avest CSP Bign"
+
+
+$CSPDocsDest = Join-Path $ProgramFiles "Avest\Avest CSP Bign"
+if (-not (Test-Path $CSPDocsDest)) { New-Item -ItemType Directory -Path $CSPDocsDest -Force | Out-Null }
+$CSPDocFile = Join-Path $DocsDir "AvCSPBign_РОп.pdf"
+if (Test-Path $CSPDocFile) {
+    Copy-Item -Path $CSPDocFile -Destination $CSPDocsDest -Force
+}
+
+
+
+$PCMExe = Join-Path $DataDir "AvPCMEx_setup.exe"
+$PCMDest = Join-Path $ProgramFiles "Avest\AvPCM_ncesBign"
+
+$PCMArgs = "/VERYSILENT /NORESTART /typestore=systemstore `"/DIR=$PCMDest`""
+Start-SilentInstall -FilePath $PCMExe -Arguments $PCMArgs -ComponentName "Менеджер сертификатов NCES"
+
+
+$WgetCrlSrc = Join-Path $DataDir "wgetcrl"
+if (Test-Path $WgetCrlSrc) {
+    if (-not (Test-Path $PCMDest)) { New-Item -ItemType Directory -Path $PCMDest -Force | Out-Null }
+    Copy-Item -Path "$WgetCrlSrc\*" -Destination $PCMDest -Recurse -Force
+}
+
+$PCMDocFile = Join-Path $DocsDir "AvUCK_РОп.pdf"
+if (Test-Path $PCMDocFile) {
+    if (-not (Test-Path $PCMDest)) { New-Item -ItemType Directory -Path $PCMDest -Force | Out-Null }
+    Copy-Item -Path $PCMDocFile -Destination $PCMDest -Force
+}
+
+Write-Host "`nУстановка выбранных компонентов Avest PKI завершена" -ForegroundColor Yellow
